@@ -1,4 +1,5 @@
 #include "directory.h"
+#include <dirent.h>
 
 inline static int is_valid_dir(const char* dir_name)
 {
@@ -10,17 +11,48 @@ static inline void append_to_path(const char* rel_path, const char* head, char* 
   sprintf(buf, "%s/%s", rel_path, head);
 }
 
+void assign_workload(DIR** dirs, int num_workers, const char* dirpath)
+{
+  assert(dirs != NULL);
+
+  unsigned int count = 0;
+  struct dirent* dummy;
+
+  for (int i = 0; i < num_workers; ++i)
+  {
+    dirs[i] = open_dir(dirpath);
+
+    // NOTE: If turns out that dirp=0 is not valid location, delete this if-sentence
+    if (i == 0)
+    {
+      continue;
+    }
+
+    while ((dummy=readdir(dirs[i])) != NULL)
+    {
+      if ((int)count == i * DIRS_PER_THREAD)
+        break;
+
+      // Parent and current dir as if they don't exist... or count
+      count += (is_valid_dir(dummy->d_name) ? 1 : 0);
+    }
+    count = 0;
+  }
+}
+
 unsigned int get_num_files(DIR* dirp)
 {
   struct dirent* entry;
   unsigned int count = 0;
-  
+
   while ((entry=readdir(dirp)) != NULL)
   {
+    //printf("%s: %lu\n", entry->d_name, telldir(dirp));
     if (is_valid_dir(entry->d_name))
       ++count;
   }
 
+  //rewinddir(dirp);
   return count;
 }
 
