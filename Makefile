@@ -9,7 +9,7 @@ BIN=bin/chase
 TEST_DIR=./test/
 SRC:=$(wildcard src/*.c)
 INCLUDES:=$(wildcard src/*.h)
-OBJ:=$(addprefix obj/, main.o directory.o)
+OBJ:=$(addprefix obj/, main.o directory.o thread.o)
 
 VAL_FLAGS=--leak-check=full --trace-children=yes
 
