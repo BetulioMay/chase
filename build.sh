@@ -4,4 +4,4 @@ set -xe
 
 binary=chase
 
-gcc -o $binary main.c
+gcc -O1 -pthread -o $binary main.c
