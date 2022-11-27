@@ -1,5 +1,6 @@
 #include "directory.h"
 #include <dirent.h>
+#include <sys/stat.h>
 
 static inline void append_to_path(const char* rel_path, const char* head, char* buf)
 {
@@ -18,9 +19,6 @@ unsigned int get_num_files(DIR* dirp)
     if (is_valid_dir(entry->d_name))
       ++count;
   }
-
-  // Set directories per thread
-
 
   //rewinddir(dirp);
   return count;
@@ -56,11 +54,13 @@ void traverse_dir(DIR* dirp, const char* rel_path, int level, const unsigned int
   
   char filepath[PATH_MAX + 1];
   struct stat sbuf;
+
   while ((entry=readdir(dirp)) != NULL && count < limit)
   {
-    if (level == 0) ++count;
     if (!is_valid_dir(entry->d_name))
       continue;
+
+    if (level == 0) ++count;
 
     append_to_path(rel_path, entry->d_name, filepath);
 
@@ -76,6 +76,7 @@ void traverse_dir(DIR* dirp, const char* rel_path, int level, const unsigned int
 
     if (S_ISDIR(sbuf.st_mode))
     {
+      // TODO: errno 24. Too many files opened because of this
       DIR* n_dirp = open_dir(filepath);
       traverse_dir(n_dirp, filepath, level+1, limit);
     }
