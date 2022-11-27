@@ -40,6 +40,7 @@ void* thread_func(void* args_void)
 
   printf("dir for thread(%u): %lu\n", args->tid, telldir(args->dirp));
 
+  close_dir(args->dirp);
   free(args);
 
   pthread_exit(NULL);
@@ -112,7 +113,6 @@ int main(int argc, char** argv)
   // Start chasing
   //traverse_dir(dirp, argv[1]);
 
-  printf("hello\n");
   for (int i = 0; i < num_threads; ++i)
   {
     void* status;

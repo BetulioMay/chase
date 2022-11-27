@@ -47,7 +47,7 @@ unsigned int get_num_files(DIR* dirp)
 
   while ((entry=readdir(dirp)) != NULL)
   {
-    //printf("%s: %lu\n", entry->d_name, telldir(dirp));
+    printf("%s: %lu\n", entry->d_name, telldir(dirp));
     if (is_valid_dir(entry->d_name))
       ++count;
   }
