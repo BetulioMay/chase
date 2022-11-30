@@ -79,6 +79,7 @@ void traverse_dir(DIR* dirp, const char* rel_path, int level, const unsigned int
       // TODO: errno 24. Too many files opened because of this
       DIR* n_dirp = open_dir(filepath);
       traverse_dir(n_dirp, filepath, level+1, limit);
+      close_dir(n_dirp);
     }
   }
 }
