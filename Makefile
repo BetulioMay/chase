@@ -13,8 +13,6 @@ OBJ:=$(addprefix obj/, main.o directory.o thread.o)
 
 VAL_FLAGS=--leak-check=full --trace-children=yes
 
-all: $(BIN)
-
 $(BIN): $(OBJ) bin/
 	$(CC) $(CFLAGS) -o $@ $(OBJ)
 
@@ -22,7 +20,7 @@ obj/%.o: src/%.c $(INCLUDES) obj/
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 run: $(BIN)
-	./$(BIN) $(TEST_DIR)
+	./$(BIN) $(TEST_DIR) kudos.rs
 
 valgrind: $(BIN)
 	valgrind $(VAL_FLAGS) $(BIN) $(TEST_DIR)

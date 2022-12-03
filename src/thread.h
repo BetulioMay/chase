@@ -9,10 +9,21 @@
 
 typedef struct _thread_args
 {
+  // Thread id
   unsigned int tid;
+
+  // Current dir pointer
   DIR* dirp;
+
+  // Parent dir of searching tree
   char* initial_dir;
+
+  // Thread tasks slice
   unsigned int num_tasks;
+
+  // searching options
+  CHASE_OPTS* ch_opts;
+
 } THREAD_ARGS;
 
 void* thread_func(void* args_void);

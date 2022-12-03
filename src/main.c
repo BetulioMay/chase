@@ -13,6 +13,8 @@
 
 static void parse_dir_arg(char* dir_arg)
 {
+  if (is_root_directory(dir_arg)) return;
+
   // Get rid of trailing '/'
   unsigned long size = strlen(dir_arg) + 1;
 
@@ -31,17 +33,26 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
-  // Parse initial directory
+  // Parse arguments
   parse_dir_arg(argv[1]);
  
   // Open directory
   DIR* dirp = open_dir(argv[1]);
 
+  // Init chase options
+  // TODO: implement for filetypes
+  CHASE_OPTS ch_opts =
+  {
+    .ch_filename = argv[2],
+    .ch_type = NULL
+  };
+ 
   // Init threads
   THREAD_ARGS args = {
     .tid = -1,    // -1 === no id assigned
     .dirp = dirp,
-    .initial_dir = argv[1]
+    .initial_dir = argv[1],
+    .ch_opts = &ch_opts
   };
 
   pthread_t threads[MAX_NUM_THREADS];

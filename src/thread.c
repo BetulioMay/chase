@@ -6,11 +6,11 @@ void* thread_func(void* args_void)
 {
   THREAD_ARGS* args = args_void;
 
-  printf("dir for thread(%u): %lu\n", args->tid, telldir(args->dirp));
+  // printf("dir for thread(%u): %lu\n", args->tid, telldir(args->dirp));
 
-  traverse_dir(args->dirp, args->initial_dir, 0, args->num_tasks);
+  traverse_dir(args->dirp, args->initial_dir, 0, args->num_tasks, args->ch_opts);
 
-  // Free resources
+  // Free thread resources
   close_dir(args->dirp);
   free(args);
 
@@ -45,8 +45,9 @@ unsigned int create_threads(pthread_t* threads, THREAD_ARGS* common_args)
     thread_args->dirp = dirs[i];
     thread_args->initial_dir = common_args->initial_dir;
     thread_args->num_tasks = DIRS_PER_THREAD;
+    thread_args->ch_opts = common_args->ch_opts;
 
-    printf("thread_args->dirp = %lu\n", telldir(thread_args->dirp));
+    // printf("thread_args->dirp = %lu\n", telldir(thread_args->dirp));
 
     int t_error = pthread_create(&threads[i], NULL, thread_func, (void*)thread_args);
 
@@ -70,7 +71,6 @@ void assign_workload(DIR** dirs, int num_workers, const char* dirpath, unsigned 
   for (int i = 0; i < num_workers; ++i)
   {
     dirs[i] = open_dir(dirpath);
-    printf("Telldir(dirs[0]) %lu\n", telldir(dirs[i]));
 
     // NOTE: If turns out that dirp=0 is not valid location, delete this if-sentence
     if (i == 0)
@@ -80,8 +80,13 @@ void assign_workload(DIR** dirs, int num_workers, const char* dirpath, unsigned 
 
     while ((dummy=readdir(dirs[i])) != NULL)
     {
-      if (count == i * dirs_thread)
+      if (!is_valid_dir(dummy->d_name))
+        continue;
+
+      if (count == i * dirs_thread - 1)
+      {
         break;
+      }
 
       // Parent and current dir as if they don't exist... or count
       count += (is_valid_dir(dummy->d_name) ? 1 : 0);

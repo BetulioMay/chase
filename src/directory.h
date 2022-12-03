@@ -8,7 +8,17 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
-#include <pthread.h>
+
+typedef struct _chase_options
+{
+  char* ch_filename;
+  char* ch_type;
+} CHASE_OPTS;
+
+inline int is_root_directory(const char* dir)
+{
+  return (strcmp(dir, "/") == 0 ? 1 : 0);
+}
 
 inline int is_valid_dir(const char* dir_name)
 {
@@ -19,7 +29,9 @@ DIR* open_dir(const char* dir_path);
 
 int close_dir(DIR* dir);
 
-void traverse_dir(DIR* dirp, const char* rel_path, int level, const unsigned int limit);
+void traverse_dir(DIR* dirp, const char* rel_path, int level, const unsigned int limit, const CHASE_OPTS* ch_opts);
+
+void output_file(const char* filename, pthread_mutex_t* mutex, const CHASE_OPTS* ch_opts);
 
 unsigned int get_num_files(DIR* dirp);
 
