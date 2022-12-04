@@ -9,10 +9,16 @@
 #include <sys/stat.h>
 #include <assert.h>
 
+typedef enum
+{
+  REGULAR,
+  DIRECTORY
+} file_type_t;
+
 typedef struct _chase_options
 {
   char* ch_filename;
-  char* ch_type;
+  file_type_t ch_type;
 } CHASE_OPTS;
 
 inline int is_root_directory(const char* dir)

@@ -25,6 +25,32 @@ static void parse_dir_arg(char* dir_arg)
   }
 }
 
+static file_type_t validate_file_type(const char* in_type)
+{
+  if (strlen(in_type) != 1)
+  {
+    fprintf(stderr, "ERROR: bad arg option value %s\n", in_type);
+    exit(EXIT_FAILURE);
+  }
+
+  file_type_t type;
+
+  switch(in_type[0])
+  {
+  case 'f':
+    type = REGULAR;
+    break;
+  case 'd':
+    type = DIRECTORY;
+    break;
+  default:
+    fprintf(stderr, "ERROR: type %c not supported\n", in_type[0]);
+    exit(EXIT_FAILURE);
+    break;
+  }
+  return type;
+}
+
 int main(int argc, char** argv)
 {
   if (argc < 2)
@@ -38,7 +64,7 @@ int main(int argc, char** argv)
   char* initial_dir = argv[1];
 
   // Parse options
-  CHASE_OPTS ch_opts = {NULL, NULL};
+  CHASE_OPTS ch_opts;
   char ch;
   while ((ch=getopt(argc, argv, "n:t:")) != -1)
   {
@@ -48,7 +74,7 @@ int main(int argc, char** argv)
         ch_opts.ch_filename = optarg;
         break;
       case 't':
-        ch_opts.ch_type = optarg;
+        ch_opts.ch_type = validate_file_type(optarg);
         break;
       default:break;
     }

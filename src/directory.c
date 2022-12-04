@@ -1,20 +1,37 @@
 #include "directory.h"
 #include <pthread.h>
 #include <fnmatch.h>
+#include <sys/stat.h>
 
-// taken from https://stackoverflow.com/a/5804935/11902943
+// taken and modified from https://stackoverflow.com/a/5804935/11902943
 static const char* gnu_basename(const char* path)
 {
-  const char* base = strrchr(path, '/');
+  char* base = strrchr(path, '/');
   return base ? base+1 : path;
 }
 
-static int match_pattern_filename(const char* pattern, const char* filepath)
+////// Helpers for globbing and searching ////////
+static inline int match_pattern_filename(const char* pattern, const char* filepath)
 {
-  const char* filename = gnu_basename(filepath);
-  int res = fnmatch(pattern, filename, FNM_NOMATCH);
-  return res;
+  return fnmatch(pattern, gnu_basename(filepath), 0x0);
 }
+
+static int match_file_type(const file_type_t type, const mode_t f_mode)
+{
+  switch (type)
+  {
+  case REGULAR:
+    if (S_ISREG(f_mode))
+      return 0;
+    break;
+  case DIRECTORY:
+    if (S_ISDIR(f_mode))
+      return 0;
+    break;
+  }
+  return 1;
+}
+
 static void append_to_path(const char* rel_path, const char* head, char* buf)
 {
   char* format = "%s/%s";
@@ -70,8 +87,11 @@ void output_file(const char* filepath, pthread_mutex_t* mutex, const CHASE_OPTS*
     exit(EXIT_FAILURE);
   }
 
-  // Filter file
-  if (ch_opts->ch_filename && match_pattern_filename(ch_opts->ch_filename, filepath))
+  // Filter by filename
+  if (ch_opts->ch_filename && match_pattern_filename(ch_opts->ch_filename, filepath) != 0)
+    return;
+  // Filter by file type
+  if (ch_opts->ch_type && match_file_type(ch_opts->ch_type, sbuf.st_mode) != 0)
     return;
 
   // Finally print the searched file
