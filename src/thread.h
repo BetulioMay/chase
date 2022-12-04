@@ -5,7 +5,7 @@
 #include <dirent.h>
 #include <pthread.h>
 
-#define MAX_NUM_THREADS 10
+#define MAX_NUM_THREADS 5
 
 typedef struct _thread_args
 {

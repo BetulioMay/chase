@@ -33,25 +33,35 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
-  // Parse arguments
+  // Parse search directory
   parse_dir_arg(argv[1]);
- 
-  // Open directory
-  DIR* dirp = open_dir(argv[1]);
+  char* initial_dir = argv[1];
 
-  // Init chase options
-  // TODO: implement for filetypes
-  CHASE_OPTS ch_opts =
+  // Parse options
+  CHASE_OPTS ch_opts = {NULL, NULL};
+  char ch;
+  while ((ch=getopt(argc, argv, "n:t:")) != -1)
   {
-    .ch_filename = argv[2],
-    .ch_type = NULL
-  };
+    switch(ch)
+    {
+      case 'n':
+        ch_opts.ch_filename = optarg;
+        break;
+      case 't':
+        ch_opts.ch_type = optarg;
+        break;
+      default:break;
+    }
+  }
+
+  // Open directory
+  DIR* dirp = open_dir(initial_dir);
  
   // Init threads
   THREAD_ARGS args = {
     .tid = -1,    // -1 === no id assigned
     .dirp = dirp,
-    .initial_dir = argv[1],
+    .initial_dir = initial_dir,
     .ch_opts = &ch_opts
   };
 

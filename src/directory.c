@@ -1,8 +1,20 @@
 #include "directory.h"
-#include <dirent.h>
-#include <sys/stat.h>
 #include <pthread.h>
+#include <fnmatch.h>
 
+// taken from https://stackoverflow.com/a/5804935/11902943
+static const char* gnu_basename(const char* path)
+{
+  const char* base = strrchr(path, '/');
+  return base ? base+1 : path;
+}
+
+static int match_pattern_filename(const char* pattern, const char* filepath)
+{
+  const char* filename = gnu_basename(filepath);
+  int res = fnmatch(pattern, filename, FNM_NOMATCH);
+  return res;
+}
 static void append_to_path(const char* rel_path, const char* head, char* buf)
 {
   char* format = "%s/%s";
@@ -59,7 +71,7 @@ void output_file(const char* filepath, pthread_mutex_t* mutex, const CHASE_OPTS*
   }
 
   // Filter file
-  if (ch_opts->ch_filename && strstr(filepath, ch_opts->ch_filename) == NULL)
+  if (ch_opts->ch_filename && match_pattern_filename(ch_opts->ch_filename, filepath))
     return;
 
   // Finally print the searched file
