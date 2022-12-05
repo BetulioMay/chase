@@ -7,23 +7,40 @@
 
 #include <pthread.h>
 #include <math.h>
+#include <argp.h>
 
 #include "directory.h"
 #include "thread.h"
+#include "args.h"
 
-static void parse_dir_arg(char* dir_arg)
+/***** ARGP Global Variables *****/
+// Program version
+const char* argp_program_version = 
+  "chase 0.1.1";
+
+// Bug address
+const char* program_bug_address = 
+  "<https://github.com/BetulioMay/chase/issues>";
+
+// Documentation
+static char doc[] = 
+  "Chase -- simple concurrent file seeker";
+
+// Program Arguments
+static char args_doc[] = "[initial_dir...]";
+
+static struct argp_option options[] = {
+  {"name",  'n', "NAME",      0,  "Search by filename", 0 },
+  {"type",    't', "TYPE",      0,  FILE_TYPE_DESC, 0 },
+  { 0 }
+};
+
+struct arguments
 {
-  if (is_root_directory(dir_arg)) return;
-
-  // Get rid of trailing '/'
-  unsigned long size = strlen(dir_arg) + 1;
-
-  // remove trailing '/' if not root directory
-  if (dir_arg[size-2] == '/' && strlen(dir_arg) > 1)
-  {
-    dir_arg[size-2] = '\0';
-  }
-}
+  char* args[1];                /* arg1 */
+  char* name;
+  file_type_t type;
+};
 
 static file_type_t validate_file_type(const char* in_type)
 {
@@ -51,34 +68,76 @@ static file_type_t validate_file_type(const char* in_type)
   return type;
 }
 
+static error_t parse_opt (int key, char *arg, struct argp_state *state)
+{
+  /* Get the input argument from argp_parse, which we
+     know is a pointer to our arguments structure. */
+  struct arguments *arguments = state->input;
+
+  switch (key)
+    {
+    case 'n':
+      arguments->name = arg;
+      break;
+    case 't':
+      arguments->type = validate_file_type(arg);
+      break;
+
+    case ARGP_KEY_ARG:
+      if (state->arg_num > 2)
+        /* Too many arguments. */
+        argp_usage(state);
+
+      arguments->args[state->arg_num] = arg;
+
+      break;
+
+    case ARGP_KEY_END:
+      if (state->arg_num < 1)
+        /* Not enough arguments. */
+        argp_usage(state);
+      break;
+
+    default:
+      return ARGP_ERR_UNKNOWN;
+    }
+  return 0;
+}
+// Parser
+static struct argp argp = { options, parse_opt, args_doc, doc, 0, 0, 0 };
+/************************/
+
+static void parse_dir_arg(char* dir_arg)
+{
+  if (is_root_directory(dir_arg)) return;
+
+  // Get rid of trailing '/'
+  unsigned long size = strlen(dir_arg) + 1;
+
+  // remove trailing '/' if not root directory
+  if (dir_arg[size-2] == '/' && strlen(dir_arg) > 1)
+  {
+    dir_arg[size-2] = '\0';
+  }
+}
+
+
 int main(int argc, char** argv)
 {
-  if (argc < 2)
-  {
-    fprintf(stderr, "ERROR: bad arguments\n");
-    exit(EXIT_FAILURE);
-  }
+  struct arguments arguments;
+  arguments.name = 0;
+  arguments.type = REGULAR;
 
-  // Parse search directory
-  parse_dir_arg(argv[1]);
-  char* initial_dir = argv[1];
+  // Parse arguments
+  argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
-  // Parse options
+  // Init options
   CHASE_OPTS ch_opts;
-  char ch;
-  while ((ch=getopt(argc, argv, "n:t:")) != -1)
-  {
-    switch(ch)
-    {
-      case 'n':
-        ch_opts.ch_filename = optarg;
-        break;
-      case 't':
-        ch_opts.ch_type = validate_file_type(optarg);
-        break;
-      default:break;
-    }
-  }
+  ch_opts.ch_filename = arguments.name;
+  ch_opts.ch_type = arguments.type;
+
+  parse_dir_arg(arguments.args[0]);
+  char* initial_dir = arguments.args[0];
 
   // Open directory
   DIR* dirp = open_dir(initial_dir);
